@@ -1,0 +1,45 @@
+name: Frontend
+
+
+on:
+  push:
+    branches: [ "main" ]
+    tags:
+      - "v*"
+      
+  pull_request:
+    branches: [ "main" ]
+ 
+jobs:
+       
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    -
+        name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{secrets.DOCKER_USERNAME}}
+          password: ${{secrets.DOCKER_PASSWORD}}
+          
+    -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        
+    -
+        name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{secrets.DOCKER_USERNAME}}/frontend:latest
+         
+         
+  webhook:
+    needs: docker
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Build & test"
+        run: curl -X POST http://193.191.176.81:9000/api/webhooks/3ceb44e7-2e93-4a29-8c85-04853a9cb6e0
